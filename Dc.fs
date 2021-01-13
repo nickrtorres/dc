@@ -40,30 +40,26 @@ let parse tokens =
 
     and expression tokens =
         let (updated, t) = term tokens
-        expTail updated t
+        expTail(updated, t)
 
-    and expTail tokens i =
+    and expTail(tokens,i) =
         match peek tokens with
         | Some '+' ->
-            let (updated, v) = atom (eat tokens)
-            expTail updated (i + v)
+            eat tokens |> atom |> (fun (t, v) -> (t, (v + i))) |> expTail
         | Some '-' ->
-            let (updated, v) = atom (eat tokens)
-            expTail updated (i - v)
+            eat tokens |> atom |> (fun (t, v) -> (t, (v - i))) |> expTail
         | _ -> (tokens, i)
 
     and term tokens =
         let (updated, a) = atom tokens
-        termTail updated a
+        termTail(updated, a)
 
-    and termTail tokens i =
+    and termTail(tokens, i) =
         match peek tokens with
         | Some '*' ->
-            let (updated, t) = term (eat tokens)
-            termTail updated (i * t)
+            eat tokens |> term |> (fun (t, v) -> (t, (v * i))) |> termTail
         | Some '-' ->
-            let (updated, t) = term (eat tokens)
-            termTail updated (i / t)
+            eat tokens |> term |> (fun (t, v) -> (t, (v / i))) |> termTail
         | _ -> (tokens, i)
 
     let (_, i) = expression tokens
