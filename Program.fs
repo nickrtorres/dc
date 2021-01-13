@@ -1,4 +1,4 @@
-exception Syntax
+exception SyntaxException
 
 let tokenize (s: string) =
     let stream = (new System.IO.StringReader(s))
@@ -17,15 +17,9 @@ let parse tokens =
 
     let digit c = '0' <= c && c <= '9'
 
-    let peek tokens =
-        match tokens with
-        | [] -> None
-        | hd :: tl -> Some(hd)
+    let peek tokens = List.tryHead tokens
 
-    let eat tokens =
-        match tokens with
-        | [] -> []
-        | hd :: tl -> tl
+    let eat (tokens: 'a list) = tokens.Tail
 
     let rec integer tokens i =
         match peek tokens with
@@ -40,9 +34,9 @@ let parse tokens =
 
             match peek updated with
             | Some ')' -> (eat updated, e)
-            | _ -> raise (Syntax)
+            | _ -> raise (SyntaxException)
         | Some c when digit c -> integer tokens 0
-        | _ -> raise (Syntax)
+        | _ -> raise (SyntaxException)
 
     and expression tokens =
         let (updated, t) = term tokens
