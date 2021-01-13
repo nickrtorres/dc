@@ -10,12 +10,12 @@ let tokenize s =
         | -1 -> []
         | c -> Convert.ToChar c :: tokenize' stream
 
-    List.filter (fun c -> c <> ' ') (tokenize' stream)
+    tokenize' stream
+    |> List.filter (fun c -> c <> ' ')
 
 let parse tokens =
     let intoInt (c: char) =
-        (Convert.ToInt32 c)
-        - Convert.ToInt32 '0'
+        (Convert.ToInt32 c) - Convert.ToInt32 '0'
 
     let digit c = '0' <= c && c <= '9'
 
@@ -23,9 +23,9 @@ let parse tokens =
 
     let eat (tokens: 'a list) = tokens.Tail
 
-    let rec integer tokens i =
+    let rec integer i tokens =
         match peek tokens with
-        | Some c when digit c -> integer (eat tokens) (10 * i + intoInt c)
+        | Some c when digit c -> eat tokens |> integer (10 * i + intoInt c)
         | _ -> (tokens, Convert.ToInt32 i)
 
     and atom tokens =
@@ -36,31 +36,39 @@ let parse tokens =
             match peek updated with
             | Some ')' -> (eat updated, e)
             | _ -> raise (SyntaxException)
-        | Some c when digit c -> integer tokens 0
+        | Some c when digit c -> integer 0 tokens
         | _ -> raise (SyntaxException)
 
-    and expression tokens =
-        let (updated,t) = term tokens
-        expTail(updated, t)
+    and expression tokens = term tokens |> expTail
 
-    and expTail(tokens,i) =
+    and expTail (tokens, i) =
         match peek tokens with
         | Some '+' ->
-            eat tokens |> atom |> (fun (t, v) -> (t, (v + i))) |> expTail
+            eat tokens
+            |> atom
+            |> (fun (t, v) -> (t, (v + i)))
+            |> expTail
         | Some '-' ->
-            eat tokens |> atom |> (fun (t, v) -> (t, (v - i))) |> expTail
+            eat tokens
+            |> atom
+            |> (fun (t, v) -> (t, (v - i)))
+            |> expTail
         | _ -> (tokens, i)
 
-    and term tokens =
-        let (updated, a) = atom tokens
-        termTail(updated, a)
+    and term tokens = atom tokens |> termTail
 
-    and termTail(tokens, i) =
+    and termTail (tokens, i) =
         match peek tokens with
         | Some '*' ->
-            eat tokens |> term |> (fun (t, v) -> (t, (v * i))) |> termTail
+            eat tokens
+            |> term
+            |> (fun (t, v) -> (t, (v * i)))
+            |> termTail
         | Some '-' ->
-            eat tokens |> term |> (fun (t, v) -> (t, (v / i))) |> termTail
+            eat tokens
+            |> term
+            |> (fun (t, v) -> (t, (v / i)))
+            |> termTail
         | _ -> (tokens, i)
 
     let (_, i) = expression tokens
