@@ -28,8 +28,6 @@ let parse tokens =
         | hd :: tl -> tl
 
     let rec integer tokens i =
-        printfn "i => %A" i
-
         match peek tokens with
         | Some c when digit c -> integer (eat tokens) (10 * i + intoInt c)
         | Some _
@@ -50,10 +48,14 @@ let parse tokens =
         let (updated, t) = term tokens
         expTail updated t
 
-    and expTail (tokens: char list, i: int) =
+    and expTail tokens i =
         match peek tokens with
-        | Some '+' -> eat tokens >> atom >> expTail
-        | Some '-' -> eat tokens |> atom |> expTail
+        | Some '+' ->
+            let (updated, v) = atom (eat tokens)
+            expTail updated (i + v)
+        | Some '-' ->
+            let (updated, v) = atom (eat tokens)
+            expTail updated (i - v)
         | _ -> (tokens, i)
 
     and term tokens =
@@ -74,4 +76,7 @@ let parse tokens =
     i
 
 [<EntryPoint>]
-let main argv = 0 // return an integer exit code
+let main argv =
+    assert (12 = (tokenize "3 * 4" |> parse))
+    assert (21 = (tokenize "(1 + 2) * (3 + 4)" |> parse))
+    0 // return an integer exit code
