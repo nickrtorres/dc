@@ -1,19 +1,21 @@
+open System
+
 exception SyntaxException
 
-let tokenize (s: string) =
-    let stream = (new System.IO.StringReader(s))
+let tokenize s =
+    let stream = (new IO.StringReader(s))
 
-    let rec tokenize' (stream: System.IO.StringReader) =
+    let rec tokenize' (stream: IO.StringReader) =
         match stream.Read() with
         | -1 -> []
-        | c -> System.Convert.ToChar c :: tokenize' stream
+        | c -> Convert.ToChar c :: tokenize' stream
 
     List.filter (fun c -> c <> ' ') (tokenize' stream)
 
 let parse tokens =
     let intoInt (c: char) =
-        (System.Convert.ToInt32 c)
-        - System.Convert.ToInt32 '0'
+        (Convert.ToInt32 c)
+        - Convert.ToInt32 '0'
 
     let digit c = '0' <= c && c <= '9'
 
@@ -24,8 +26,7 @@ let parse tokens =
     let rec integer tokens i =
         match peek tokens with
         | Some c when digit c -> integer (eat tokens) (10 * i + intoInt c)
-        | Some _
-        | None -> (tokens, System.Convert.ToInt32 i)
+        | _ -> (tokens, Convert.ToInt32 i)
 
     and atom tokens =
         match peek tokens with
@@ -39,7 +40,7 @@ let parse tokens =
         | _ -> raise (SyntaxException)
 
     and expression tokens =
-        let (updated, t) = term tokens
+        let (updated,t) = term tokens
         expTail(updated, t)
 
     and expTail(tokens,i) =
